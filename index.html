@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amnet Networks - Hotspot Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .box {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0px 0px 10px 0px #ccc;
+            border-radius: 5px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .status-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .status-box .status {
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .form-group input[type="number"] {
+            max-width: 150px;
+        }
+
+        .form-group button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .form-group button:hover {
+            background-color: #45a049;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .table th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #4CAF50;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .disconnect-btn {
+            background-color: #f44336;
+        }
+
+        .disconnect-btn:hover {
+            background-color: #e74c3c;
+        }
+
+        .graph-box {
+            height: 300px;
+            background-color: #eee;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .graph-box p {
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Amnet Networks Hotspot Management</h1>
+    </div>
+
+    <div class="container">
+        <div class="box">
+            <h2>Active Device Connections</h2>
+            <div class="status-box">
+                <div>
+                    <span class="status">Devices Connected: </span>
+                    <span id="connectedDevices">0</span>
+                </div>
+                <div>
+                    <button onclick="disconnectAll()">Disconnect All Devices</button>
+                </div>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Device ID</th>
+                        <th>Data Used (MB)</th>
+                        <th>Time Connected (Minutes)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="deviceTable">
+                    <tr>
+                        <td colspan="4">No devices connected.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="box">
+            <h2>Manage Bandwidth</h2>
+            <div class="form-group">
+                <label for="deviceId">Select Device ID</label>
+                <select id="deviceId">
+                    <option value="">Select device</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bandwidth">Adjust Bandwidth (Mbps)</label>
+                <input type="number" id="bandwidth" placeholder="Enter bandwidth">
+            </div>
+            <div class="form-group">
+                <button onclick="adjustBandwidth()">Set Bandwidth</button>
+            </div>
+        </div>
+
+        <div class="box">
+            <h2>Manage Time Limits</h2>
+            <div class="form-group">
+                <label for="timeLimit">Adjust Connection Time (Minutes)</label>
+                <input type="number" id="timeLimit" placeholder="Enter time limit">
+            </div>
+            <div class="form-group">
+                <button onclick="adjustTime()">Set Time Limit</button>
+            </div>
+        </div>
+
+        <div class="box">
+            <h2>Statistics</h2>
+            <div class="graph-box">
+                <p>Graph showing data usage over time will appear here.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Amnet Networks © 2024</p>
+    </div>
+
+    <script>
+        let devices = [];
+        let connectedDevicesCount = 0;
+
+        function connectDevice() {
+            const deviceId = prompt("Enter Device ID:");
+            if (deviceId && !devices.find(d => d.deviceId === deviceId)) {
+                devices.push({ deviceId, dataUsed: 0, timeConnected: 0 });
+                connectedDevicesCount++;
+                updateTable();
+                updateConnectedDevices();
+            } else {
+                alert("Device ID is invalid or already connected.");
+            }
+        }
+
+        function disconnectDevice(deviceId) {
+            devices = devices.filter(d => d.deviceId !== deviceId);
+            connectedDevicesCount--;
+            updateTable();
+            updateConnectedDevices();
+        }
+
+        function disconnectAll() {
+            devices = [];
+            connectedDevicesCount = 0;
+            updateTable();
+            updateConnectedDevices();
+        }
+
+        function updateTable() {
+            const deviceTable = document.getElementById("deviceTable");
+            deviceTable.innerHTML = '';
+            if (devices.length === 0) {
+                deviceTable.innerHTML = `<tr><td colspan="4">No devices connected.</td></tr>`;
+            } else {
+                devices.forEach(device => {
+                    deviceTable.innerHTML += `
+                        <tr>
+                            <td>${device.deviceId}</td>
+                            <td>${device.dataUsed} MB</td>
+                            <td>${device.timeConnected} Min</td>
+                            <td><button class="disconnect-btn" onclick="disconnectDevice('${device.deviceId}')">Disconnect</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Update device selection dropdown
+            const deviceIdSelect = document.getElementById("deviceId");
+            deviceIdSelect.innerHTML = '<option value="">Select device</option>';
+            devices.forEach(device => {
+                deviceIdSelect.innerHTML += `<option value="${device.deviceId}">${device.deviceId}</option>`;
+            });
+        }
+
+        function updateConnectedDevices() {
+            document.getElementById("connectedDevices").innerText = connectedDevicesCount;
+        }
+
+        function adjustBandwidth() {
+            const deviceId = document.getElementById("deviceId").value;
+            const bandwidth = document.getElementById("bandwidth").value;
+            if (deviceId && bandwidth) {
+                alert(`Bandwidth for device ${deviceId} set to ${bandwidth} Mbps.`);
+            } else {
+                alert("Please select a device and enter bandwidth.");
+            }
+        }
+
+        function adjustTime() {
+            const timeLimit = document.getElementById("timeLimit").value;
+            if (timeLimit) {
+                alert(`Time limit set to ${timeLimit} minutes.`);
+            } else {
+                alert("Please enter a time limit.");
+            }
+        }
+
+        // Auto-add some devices for demo purposes
+        connectDevice();
+        connectDevice();
+    </script>
+
+</body>
+</html>
